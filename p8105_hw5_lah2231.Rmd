@@ -3,10 +3,84 @@ title: "p8105_hw5_lah2231"
 output: github_document
 date: "2024-11-12"
 ---
+```{r}
+library(tidyverse)
+library(broom)
+```
+
+
+# Problem 2
+
+## T-Test simulation function
+```{r}
+n <- 30
+sigma <- 5
+mu_values <- c(0, 1, 2, 3, 4, 5, 6)
+num_simulations <- 5000
+alpha <- 0.05
+
+simulate_t_test <- function(mu) {
+  # Generate sample data
+  sample_data <- rnorm(n, mean = mu, sd = sigma)
+  
+  # Conduct one-sample t-test against H0: mu = 0
+  test_result <- t.test(sample_data, mu = 0)
+  
+  # Get mean estimate and p-value from the t-test
+  result <- tidy(test_result) %>% 
+    select(estimate, p.value) # `estimate` should be the correct column name
+  
+  result
+}
+```
+
+## Running Simulation
+```{r}
+simulation_results <- expand_grid(mu = mu_values, sim = 1:num_simulations) |>
+  mutate(result = map(mu, simulate_t_test)) |>
+  unnest(result)
+```
+
+## Calculating Power
+```{r}
+power_results <- simulation_results %>%
+  group_by(mu) %>%
+  summarize(power = mean(p.value < alpha))
+```
+
+## Plotting Power
+```{r}
+power_results %>%
+  ggplot(aes(x = mu, y = power)) +
+  geom_line() +
+  labs(x = "True Mean (mu)", y = "Power", title = "Power vs. Effect Size (True Mean)")
+```
+## Calculating Averga Estimate of mu_hat
+```{r}
+average_mu_hat <- simulation_results %>%
+  group_by(mu) %>%
+  summarize(
+    avg_mu_hat = mean(estimate),
+    avg_mu_hat_rejected = mean(estimate[p.value < alpha])
+  )
+```
 
 ```{r}
-#123
-
-#https://github.com/L54321/p8105_hw5_lah2231.git
+average_mu_hat %>%
+  ggplot(aes(x = mu)) +
+  geom_line(aes(y = avg_mu_hat, color = "Average mu_hat")) +
+  geom_line(aes(y = avg_mu_hat_rejected, color = "Average mu_hat (Rejected)")) +
+  labs(x = "True mean (mu)", y = "Average estimate of mu_hat",
+       title = "Average estimate of mu_hat vs. true mean") +
+  scale_color_manual(values = c("Average mu_hat" = "blue", "Average mu_hat (Rejected)" = "red"))
 ```
+
+
+
+
+
+
+
+
+
 
