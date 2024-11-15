@@ -20,15 +20,12 @@ num_simulations <- 5000
 alpha <- 0.05
 
 simulate_t_test <- function(mu) {
-  # Generate sample data
   sample_data <- rnorm(n, mean = mu, sd = sigma)
   
-  # Conduct one-sample t-test against H0: mu = 0
   test_result <- t.test(sample_data, mu = 0)
   
-  # Get mean estimate and p-value from the t-test
   result <- tidy(test_result) %>% 
-    select(estimate, p.value) # `estimate` should be the correct column name
+    select(estimate, p.value)
   
   result
 }
@@ -55,7 +52,7 @@ power_results %>%
   geom_line() +
   labs(x = "True Mean (mu)", y = "Power", title = "Power vs. Effect Size (True Mean)")
 ```
-## Calculating Averga Estimate of mu_hat
+## Calculating averga Eestimate of mu_hat
 ```{r}
 average_mu_hat <- simulation_results %>%
   group_by(mu) %>%
@@ -65,6 +62,7 @@ average_mu_hat <- simulation_results %>%
   )
 ```
 
+## Plotting average estimate of mu_hat vs. true mean
 ```{r}
 average_mu_hat %>%
   ggplot(aes(x = mu)) +
@@ -75,8 +73,42 @@ average_mu_hat %>%
   scale_color_manual(values = c("Average mu_hat" = "blue", "Average mu_hat (Rejected)" = "red"))
 ```
 
+# Problem 3
 
+## Loading Data Homicides
+```{r}
+library(readr)
 
+url <- "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
+
+homicide_data <- read_csv(url)
+
+head(homicide_data)
+```
+
+```{r}
+dim(homicide_data)
+summary(homicide_data)
+```
+
+This dataset about homicides in major US cities contains `r ncol(homicide_data)` columns and `r nrow(homicide_data)` rows. There are `r sum(is.na(homicide_data))` missing values across the dataset. The columns include: `r names(homicide_data)`.
+
+## Creating City State Column and finding total and unsolved homicides
+```{r}
+homicide_data <- mutate(homicide_data, city_state = paste(city, state, sep = ", "))
+
+homicide_summary <- homicide_data |>
+  group_by(city_state) |>
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
+    .groups = "drop"
+  )
+
+head(homicide_summary)
+```
+
+This table summarizes all homicides across the `r nrow(homicide_summary)` cities, including the total number of homicides (`r sum(pull(homicide_summary, total_homicides))`) with `r sum(pull(homicide_summary, unsolved_homicides))` unsolved cases.
 
 
 
