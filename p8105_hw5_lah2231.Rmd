@@ -84,7 +84,7 @@ average_mu_hat |>
   scale_color_manual(values = c("Average mu_hat" = "orange", "Average mu_hat (rejected)" = "green"))
 ```
 I plotted overall avergae estimate of mu against true mean and overlayed the average estimate of mu for rejected null hypothesis
-
+the plot shows that the average estimate of mu matches the true mean but for rejected tests the average is slightly higher.
 
 # Problem 3
 
