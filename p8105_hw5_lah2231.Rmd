@@ -134,7 +134,7 @@ baltimore_summary
 
 In Baltimore `r round(pull(baltimore_summary, estimate) * 100, 1)`% of homicides are unsolved with a confidence interval of `r round(pull(baltimore_summary, conf.low) * 100, 1)`% to `r round(pull(baltimore_summary, conf.high) * 100, 1)`%.
 
-## Proportion test for each city
+## Proportion tests for each city
 ```{r}
 homicide_summary <- homicide_summary %>%
   mutate(
@@ -145,8 +145,7 @@ homicide_summary <- homicide_summary %>%
     )
   )
 ```
-##
-
+## Confidence intervals
 ```{r}
 homicide_summary <- homicide_summary %>%
   mutate(
@@ -157,12 +156,13 @@ homicide_summary <- homicide_summary %>%
   )
 ```
 
-
+## Selecting relevant columns
 ```{r}
 homicide_summary <- homicide_summary %>%
   select(city_state, total_homicides, unsolved_homicides, estimate, conf_low, conf_high)
 ```
 
+## Plot Homicide Proportion unsolved
 ```{r}
 ggplot(homicide_summary, aes(x = reorder(city_state, estimate), y = estimate)) +
   geom_point() +
@@ -176,7 +176,29 @@ ggplot(homicide_summary, aes(x = reorder(city_state, estimate), y = estimate)) +
 ```
 
 
-This analysis estimates that the proportion of unsolved homicides across `r nrow(homicide_summary)` cities ranges from `r homicide_summary |> pull(conf_low) |> min() |> round(1)`% to `r homicide_summary |> pull(conf_high) |> max() |> round(1)`%.
+We can see that the proportion of unsolved homicides across `r nrow(homicide_summary)` cities goes from `r homicide_summary |> pull(conf_low) |> min() |> round(1)`% to `r homicide_summary |> pull(conf_high) |> max() |> round(1)`%. This very large confidence interval is most probably due to differences in efficiency regarding case solving between the cities or due to low homicide counts in case numbers. Tulsa seems to have had only one (solved) homicide case in our dataset which contributes to the large confidence interval.
+
+```{r}
+outliers <- homicide_summary |>
+  filter(estimate < 10 | estimate > 90)
+
+outliers
+```
+
+```{r}
+homicide_summary |>
+  mutate(ci_width = conf_high - conf_low) |>
+  ggplot(aes(x = total_homicides, y = ci_width)) +
+  geom_point() +
+  labs(x = "Homicides", y = "CI",
+       title = "CI vs homicides")
+```
+
+
+
+
+
+
 
 
 
