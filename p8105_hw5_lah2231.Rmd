@@ -59,7 +59,7 @@ power_results |>
   geom_line() +
   labs(x = "True Mean (mu)", y = "Power", title = "Power vs effect size (True mean")
 ```
-I plotted the relationship betwen effect size (mu) and power
+I plotted the relationship betwen effect size (mu) and power. The plot shows that the power increases with the true mean, nearing 1 for larger effect sizes.
 
 ## Calculating averga Eestimate of mu_hat
 ```{r}
