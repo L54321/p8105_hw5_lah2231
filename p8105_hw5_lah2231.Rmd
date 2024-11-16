@@ -6,6 +6,9 @@ date: "2024-11-12"
 ```{r}
 library(tidyverse)
 library(broom)
+library(ggplot2)
+library(dplyr)
+library(purrr)
 ```
 
 
@@ -110,8 +113,70 @@ head(homicide_summary)
 
 This table summarizes all homicides across the `r nrow(homicide_summary)` cities, including the total number of homicides (`r sum(pull(homicide_summary, total_homicides))`) with `r sum(pull(homicide_summary, unsolved_homicides))` unsolved cases.
 
+## Estimating unsolved cases in Baltimore with confidence interval
+```{r}
+baltimore_data <- homicide_summary %>%
+  filter(city_state == "Baltimore, MD")
+
+baltimore_prop_test <- prop.test(
+  baltimore_data$unsolved_homicides,
+  baltimore_data$total_homicides
+)
+baltimore_prop_test 
+
+library(broom)
+
+baltimore_summary <- broom::tidy(baltimore_prop_test) %>%
+  select(estimate, conf.low, conf.high)
+baltimore_summary
+```
 
 
+In Baltimore `r round(pull(baltimore_summary, estimate) * 100, 1)`% of homicides are unsolved with a confidence interval of `r round(pull(baltimore_summary, conf.low) * 100, 1)`% to `r round(pull(baltimore_summary, conf.high) * 100, 1)`%.
+
+## Proportion test for each city
+```{r}
+homicide_summary <- homicide_summary %>%
+  mutate(
+    prop_test = map2(
+      unsolved_homicides, 
+      total_homicides, 
+      ~prop.test(.x, .y)
+    )
+  )
+```
+##
+
+```{r}
+homicide_summary <- homicide_summary %>%
+  mutate(
+    prop_test_tidy = map(prop_test, tidy),
+    estimate = map_dbl(prop_test_tidy, ~.x$estimate * 100),
+    conf_low = map_dbl(prop_test_tidy, ~.x$conf.low * 100),
+    conf_high = map_dbl(prop_test_tidy, ~.x$conf.high * 100)
+  )
+```
+
+
+```{r}
+homicide_summary <- homicide_summary %>%
+  select(city_state, total_homicides, unsolved_homicides, estimate, conf_low, conf_high)
+```
+
+```{r}
+ggplot(homicide_summary, aes(x = reorder(city_state, estimate), y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf_low, ymax = conf_high), width = 0.2) +
+  coord_flip() +
+  labs(
+    x = "City",
+    y = "Proportion of unsolved homicides (%)",
+    title = "Proportion of unsolved homicides by city"
+  )
+```
+
+
+This analysis estimates that the proportion of unsolved homicides across `r nrow(homicide_summary)` cities ranges from `r homicide_summary |> pull(conf_low) |> min() |> round(1)`% to `r homicide_summary |> pull(conf_high) |> max() |> round(1)`%.
 
 
 
